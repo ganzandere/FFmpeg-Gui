@@ -1,6 +1,7 @@
 """Helper functions non-related to GUI custom tkinter class"""
 import re
-import sys, os
+import sys
+import os
 
 import constants as c
 
