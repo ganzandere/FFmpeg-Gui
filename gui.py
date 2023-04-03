@@ -18,7 +18,7 @@ class App(ctk.CTk):
 
         # icon_path = resource_path(r'C:\Users\Kristina-PC\Desktop\Sibin\ffmpeg_gui\images\ffmpeg.ico')
         # self.iconbitmap(icon_path)
-        self.title("FFmpeg GUI v0.1")
+        self.title("DK FFmpeg GUI")
         self.geometry(f"{c.GUI_WIDTH}x{c.GUI_HEIGHT}")
         self.maxsize(c.GUI_WIDTH, c.GUI_HEIGHT)
         self.minsize(c.GUI_WIDTH, c.GUI_HEIGHT)
@@ -68,7 +68,7 @@ class App(ctk.CTk):
         self.preset_val = ctk.StringVar(value="medium")
         self.preset_opt = ctk.CTkOptionMenu(master=self.preset_frame, font=self.font, variable=self.preset_val, values=c.H264_PRESET_VALUES, width=100)
         self.preset_opt.grid(row=0, column=0, padx=10, pady=5)
-        self.preset_label = ctk.CTkLabel(master=self.preset_frame, text="Presets", font=self.font)
+        self.preset_label = ctk.CTkLabel(master=self.preset_frame, text="Preset ", font=self.font)
         self.preset_label.grid(row=0, column=1, padx=10, pady=5)
         # CRF
         self.crf_frame = ctk.CTkFrame(master=self.advanced_frame)
@@ -107,7 +107,7 @@ class App(ctk.CTk):
         self.run_subframe1.grid(row=0, column=0, padx=5)
         self.containers_val = ctk.StringVar(value='mp4')
         self.containers_opt = ctk.CTkOptionMenu(master=self.run_subframe1, values=c.LIBX264_CONTAINERS, variable=self.containers_val, width=100, font=self.font)
-        self.containers_label = ctk.CTkLabel(master=self.run_subframe1, text='Containers', font=self.font)
+        self.containers_label = ctk.CTkLabel(master=self.run_subframe1, text='Container ', font=self.font)
         self.containers_opt.grid(row=0, column=0, padx=10, pady=5)
         self.containers_label.grid(row=0, column=1, padx=10, pady=5)
         # Run Subframe2
@@ -177,7 +177,7 @@ class App(ctk.CTk):
             self.log_textbox.insert("end", "\nDetected missing frames:\n")
             for file in missing:
                 self.log_textbox.insert("end", f"{file}\n")
-        self.command = f"""{c.FFMPEG_PATH} -y -r {actual_fps} -f concat -safe 0 -i {outfile} -framerate {self.fps_val.get()} -c:v {self.codec_opt.get()} -crf {self.crf_val.get()} -preset {self.preset_opt.get()} {output}"""
+        self.command = f"""{c.FFMPEG_PATH} -y -r {actual_fps} -f concat -safe 0 -i {outfile} -framerate {self.fps_val.get()} -pix_fmt yuv420p -c:v {self.codec_opt.get()} -crf {self.crf_val.get()} -preset {self.preset_opt.get()} {output}"""
 
         return self.command
 
