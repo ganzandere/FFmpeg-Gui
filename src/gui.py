@@ -5,11 +5,12 @@ from tkinter import filedialog as fd
 import customtkinter as ctk
 
 import constants as c
-from helpers import (sequence_collector, sequence_step_calc, sequence_writer, find_ffmpeg)
-from submit import submit_ffmpeg
+from utils import (find_ffmpeg, sequence_collector, sequence_step_calc,
+                   sequence_writer, submit_ffmpeg)
 
 
 class App(ctk.CTk):
+    """Defines a GUI class."""
     def __init__(self):
         super().__init__()
 
@@ -38,9 +39,9 @@ class App(ctk.CTk):
         # input_path
         self.in_path_frame = ctk.CTkFrame(master=self, fg_color="transparent")
         self.in_path_frame.grid(row=2, column=0, padx=10, pady=5, sticky='w')
-        self.in_path_entry = ctk.CTkEntry(master=self.in_path_frame, placeholder_text="Path to image sequence: ", corner_radius=c.CORNER_RADIUS, font=self.font, width=c.ENTRY_WIDTH)
-        self.in_path_entry.grid(row=0, column=0, padx=10, pady=5)
-        self.in_path_browse = ctk.CTkButton(master=self.in_path_frame, text='Browse', command=self.in_browse_callback, corner_radius=c.BTN_RADIUS, font=self.font)
+        self.input_entry = ctk.CTkEntry(master=self.in_path_frame, placeholder_text="Path to image sequence: ", corner_radius=c.CORNER_RADIUS, font=self.font, width=c.ENTRY_WIDTH)
+        self.input_entry.grid(row=0, column=0, padx=10, pady=5)
+        self.in_path_browse = ctk.CTkButton(master=self.in_path_frame, text='Browse', command=self.input_browse_callback, corner_radius=c.BTN_RADIUS, font=self.font)
         self.in_path_browse.grid(row=0, column=1, padx=10, pady=5)
         # container_frame
         self.advanced_frame = ctk.CTkFrame(master=self, bg_color="transparent", fg_color="transparent")
@@ -83,11 +84,11 @@ class App(ctk.CTk):
         # Output filename
         self.out_path_frame = ctk.CTkFrame(master=self, fg_color="transparent")
         self.out_path_frame.grid(row=5, column=0, padx=10, pady=5, sticky='w')
-        self.out_path_entry = ctk.CTkEntry(master=self.out_path_frame, font=self.font,
+        self.output_entry = ctk.CTkEntry(master=self.out_path_frame, font=self.font,
                                            placeholder_text="Output filename: ", corner_radius=c.CORNER_RADIUS, width=c.ENTRY_WIDTH)
-        self.out_path_entry.grid(row=0, column=0, padx=10, pady=5)
+        self.output_entry.grid(row=0, column=0, padx=10, pady=5)
         self.out_path_button = ctk.CTkButton(master=self.out_path_frame, text='Browse',
-                                             command=self.out_browse_callback, corner_radius=c.BTN_RADIUS, font=self.font)
+                                             command=self.output_browse_callback, corner_radius=c.BTN_RADIUS, font=self.font)
         self.out_path_button.grid(row=0, column=1, padx=10, pady=5)
         # Log
         self.log_frame = ctk.CTkFrame(master=self)
@@ -124,12 +125,12 @@ class App(ctk.CTk):
             self.ffmpeg_path_entry.delete(0, "end")
             self.ffmpeg_path_entry.insert(0, folder)
 
-    def in_browse_callback(self):
+    def input_browse_callback(self):
         """Defines the behaviour of input path browse button."""
         folder = fd.askopenfilename()
         if folder != "":
-            self.in_path_entry.delete(0, "end")
-            self.in_path_entry.insert(0, folder)
+            self.input_entry.delete(0, "end")
+            self.input_entry.insert(0, folder)
 
     def codec_opt_callback(self, val):
         """Not the best implementation of swapping container lists depending on the codec selected"""
@@ -140,17 +141,17 @@ class App(ctk.CTk):
             self.containers_opt.configure(values=c.LIBX265_CONTAINERS)
             self.containers_val.set(c.LIBX265_CONTAINERS[0])
 
-    def out_browse_callback(self):
+    def output_browse_callback(self):
         """Defines the behaviour of output path browse button."""
-        folder = fd.asksaveasfilename()
-        self.out_path_entry.delete(0, "end")
-        self.out_path_entry.insert(0, folder)
+        folder = fd.asksaveasfilename(filetypes=((f"{self.containers_opt.get()}", f"*.{self.containers_opt.get()}"),("All Files", "*.*") ))
+        self.output_entry.delete(0, "end")
+        self.output_entry.insert(0, folder)
 
     def preview_callback(self):
         """Constructs a preview of command in log"""
         outfile, command = self.construct_command()
-        # self.log_textbox.delete("0.0", "end")
         self.log_textbox.insert("end", f"\nConstructed ffmpeg command: \n{command}\n")
+        #Cleanup outfile after 
         if os.path.isfile(outfile):
             os.remove(outfile)
 
@@ -158,31 +159,44 @@ class App(ctk.CTk):
         """Sends constructed command to ffmpeg."""
         outfile, command = self.construct_command()
         self.log_textbox.delete("0.0", "end")
-        print(command)
+        self.log_textbox.insert("end", f"\nConstructed ffmpeg command: \n{command}\n")
         stdout, stderr = submit_ffmpeg(command)
         self.log_textbox.insert("end", f"FFmpeg output: {stderr}")
-        #Cleanup
+        #Cleanup outfile after running ffmpeg.exe"
         if os.path.isfile(outfile):
             os.remove(outfile)
 
     def construct_command(self):
         """Constructs a ffmpeg command from gui values entered by user."""
-        output = self.out_path_entry.get()
-        output = "{}.{}".format(os.path.splitext(output)[0], self.containers_val.get())
-        sequence = sequence_collector(self.in_path_entry.get())
-        split_path = os.path.split(self.in_path_entry.get())
-        outfile = sequence_writer(split_path[0], sequence)
+        input_entry = self.input_entry.get()
+        print(input_entry)
+        directory = os.path.dirname(input_entry)
+        print(directory)
+        output_stem = os.path.splitext(self.output_entry.get())[0]
+
+        fps = int(self.fps_val.get())
+        container = self.containers_val.get()
+        output = f"{output_stem}.{container}"
+        
+        sequence = sequence_collector(input_entry)
         step, missing = sequence_step_calc(sequence)
-        actual_fps = (int(self.fps_val.get()) // step)
+        outfile = sequence_writer(directory, sequence)
+        
+        actual_fps = (fps // step)
+        #Checks the extension for .exr and sets gamma to 2.2 if True.
         gamma = ""
         if os.path.splitext(sequence[0])[-1] == '.exr':
             gamma = "-gamma 2.2"
+        #Logs outfile, step and fps.
         self.log_textbox.delete("0.0", "end")
         self.log_textbox.insert("end", f"List of input frames written to: '{outfile}'.\n")
-        self.log_textbox.insert("end", f"\nFrame step detected: {step}.\nEffective input fps adjusted to: {actual_fps}\n")
-        if missing != "":
-            self.log_textbox.insert("end", "\nDetected missing frames:\n")
-            for file in missing:
-                self.log_textbox.insert("end", f"{file}\n")
+        self.log_textbox.insert("end", f"\nFrame step detected: {step}.\nEffective input fps is: {actual_fps}\n")
+        #Logs missing.
+        if missing:
+            if missing != "":
+                self.log_textbox.insert("end", "\nDetected missing frames:\n")
+                for file in missing:
+                    self.log_textbox.insert("end", f"{file}\n")
+        #Sends command to ffmpeg.
         self.command = f"{self.ffmpeg_path_entry.get()} -y {gamma} -r {actual_fps} -f concat -safe 0 -i {outfile} -framerate {self.fps_val.get()} -c:v {self.codec_opt.get()} -crf {self.crf_val.get()} -preset {self.preset_opt.get()} -pix_fmt yuv420p \"{output}\""
         return outfile, self.command
