@@ -184,5 +184,5 @@ class App(ctk.CTk):
             self.log_textbox.insert("end", "\nDetected missing frames:\n")
             for file in missing:
                 self.log_textbox.insert("end", f"{file}\n")
-        self.command = f"{c.FFMPEG_PATH} -y {gamma} -r {actual_fps} -f concat -safe 0 -i {outfile} -framerate {self.fps_val.get()} -c:v {self.codec_opt.get()} -crf {self.crf_val.get()} -preset {self.preset_opt.get()} -pix_fmt yuv420p \"{output}\""
+        self.command = f"{self.ffmpeg_path_entry.get()} -y {gamma} -r {actual_fps} -f concat -safe 0 -i {outfile} -framerate {self.fps_val.get()} -c:v {self.codec_opt.get()} -crf {self.crf_val.get()} -preset {self.preset_opt.get()} -pix_fmt yuv420p \"{output}\""
         return outfile, self.command
