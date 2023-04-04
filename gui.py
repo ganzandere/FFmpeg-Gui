@@ -5,7 +5,7 @@ from tkinter import filedialog as fd
 import customtkinter as ctk
 
 import constants as c
-from helpers import (resource_path, sequence_collector, sequence_step_calc, sequence_writer)
+from helpers import (sequence_collector, sequence_step_calc, sequence_writer)
 from submit import submit_ffmpeg
 
 
@@ -177,7 +177,7 @@ class App(ctk.CTk):
             self.log_textbox.insert("end", "\nDetected missing frames:\n")
             for file in missing:
                 self.log_textbox.insert("end", f"{file}\n")
-        self.command = f"""{c.FFMPEG_PATH} -y -r {actual_fps} -f concat -safe 0 -i {outfile} -framerate {self.fps_val.get()} -pix_fmt yuv420p -c:v {self.codec_opt.get()} -crf {self.crf_val.get()} -preset {self.preset_opt.get()} {output}"""
+        self.command = f"""{c.FFMPEG_PATH} -y -r {actual_fps} -f concat -safe 0 -i {outfile} -framerate {self.fps_val.get()} -c:v {self.codec_opt.get()} -crf {self.crf_val.get()} -preset {self.preset_opt.get()} -pix_fmt yuv420p {output}"""
 
         return self.command
 
