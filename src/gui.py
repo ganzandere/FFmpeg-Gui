@@ -159,7 +159,7 @@ class App(ctk.CTk):
         """Sends constructed command to ffmpeg."""
         outfile, command = self.construct_command()
         self.log_textbox.delete("0.0", "end")
-        self.log_textbox.insert("end", f"\nConstructed ffmpeg command: \n{command}\n")
+        self.log_textbox.insert("0.0", f"\nConstructed ffmpeg command: \n{command}\n\n")
         stdout, stderr = submit_ffmpeg(command)
         self.log_textbox.insert("end", f"FFmpeg output: {stderr}")
         #Cleanup outfile after running ffmpeg.exe"
@@ -198,5 +198,5 @@ class App(ctk.CTk):
                 for file in missing:
                     self.log_textbox.insert("end", f"{file}\n")
         #Sends command to ffmpeg.
-        self.command = f"{self.ffmpeg_path_entry.get()} -y {gamma} -r {actual_fps} -f concat -safe 0 -i {outfile} -framerate {self.fps_val.get()} -c:v {self.codec_opt.get()} -crf {self.crf_val.get()} -preset {self.preset_opt.get()} -pix_fmt yuv420p \"{output}\""
-        return outfile, self.command
+        command = f"{self.ffmpeg_path_entry.get()} -y {gamma} -r {actual_fps} -f concat -safe 0 -i {outfile} -framerate {self.fps_val.get()} -c:v {self.codec_opt.get()} -crf {self.crf_val.get()} -preset {self.preset_opt.get()} -pix_fmt yuv420p \"{output}\""
+        return outfile, command
