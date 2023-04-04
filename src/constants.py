@@ -1,10 +1,12 @@
 """Constants"""
-FFMPEG_PATH = r"C:/ffmpeg/bin/ffmpeg.exe"
-FRAME_PATTERN = r"\.\d{1,10}"
+FFMPEG_SERVER_PATH = r"//5d-server/PLUGINS/ffmpeg/bin/ffmpeg.exe"
+FFMPEG_LOCAL_PATH = r"C:/ffmpeg/bin/ffmpeg.exe"
 
 GUI_WIDTH = 750
 GUI_HEIGHT = 600
 ENTRY_WIDTH = 540
+OPT_WIDTH = 100
+SLIDER_WIDTH = 100
 CORNER_RADIUS = 30
 BTN_RADIUS = 30
 TEXTBOX_WIDTH = 800-90
@@ -21,5 +23,7 @@ H264_PRESET_VALUES = ['ultrafast', 'superfast', 'veryfast', 'faster',
 
 ENCODERS = ['libx264', 'libx265']
 
-LIBX264_CONTAINERS = ['mp4', 'mkv', 'avi', 'mov']
+LIBX264_CONTAINERS = ['mp4', 'mov', 'mkv']
 LIBX265_CONTAINERS = ['hevc', 'mp4', 'mov', 'mkv']
+
+FRAME_PATTERN = r"\.\d{1,10}"

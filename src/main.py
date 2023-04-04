@@ -1,4 +1,4 @@
-"""Entry point for program"""
+"""Entry point for FFMPEG gui."""
 
 if __name__ == "__main__":
 

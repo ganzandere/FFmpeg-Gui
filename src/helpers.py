@@ -73,12 +73,14 @@ def sequence_writer(directory, sequence_list):
     return f"{directory}/ffmpeg_input.txt"
 
 
-def resource_path(relative_path):
-    """ Get the absolute path to the resource, works for dev and for PyInstaller """
-    try:
-        # PyInstaller creates a temp folder and stores path in _MEIPASS
-        base_path = sys._MEIPASS
-    except Exception:
-        base_path = os.path.abspath(".")
-
-    return os.path.join(base_path, relative_path)
+def find_ffmpeg():
+    """Returns ffmpeg.exe path found on system"""
+    ffmpeg_path = ""
+    if "FFMPEG_PATH" in os.environ:
+        if os.path.isfile(os.environ["FFMPEG_PATH"]):
+            ffmpeg_path = os.environ["FFMPEG_PATH"]
+    elif os.path.isfile(c.FFMPEG_SERVER_PATH):
+        ffmpeg_path = c.FFMPEG_SERVER_PATH
+    elif os.path.isfile(c.FFMPEG_LOCAL_PATH):
+        ffmpeg_path = c.FFMPEG_LOCAL_PATH
+    return ffmpeg_path

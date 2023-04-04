@@ -1,4 +1,4 @@
-"""Module that sends command to ffmpeg"""
+"""This module submits command argument to ffmpeg."""
 import subprocess
 
 

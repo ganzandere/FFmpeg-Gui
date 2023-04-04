@@ -5,7 +5,7 @@ from tkinter import filedialog as fd
 import customtkinter as ctk
 
 import constants as c
-from helpers import (sequence_collector, sequence_step_calc, sequence_writer)
+from helpers import (sequence_collector, sequence_step_calc, sequence_writer, find_ffmpeg)
 from submit import submit_ffmpeg
 
 
@@ -16,15 +16,14 @@ class App(ctk.CTk):
         ctk.set_appearance_mode("dark")
         ctk.set_default_color_theme("blue")
 
-        # icon_path = resource_path(r'C:\Users\Kristina-PC\Desktop\Sibin\ffmpeg_gui\images\ffmpeg.ico')
-        # self.iconbitmap(icon_path)
+        icon_path = os.path.normpath(f"{os.path.dirname(__file__)}/../icons/ffmpeg.ico")
+        self.iconbitmap(icon_path)
         self.title("DK FFmpeg GUI")
         self.geometry(f"{c.GUI_WIDTH}x{c.GUI_HEIGHT}")
         self.maxsize(c.GUI_WIDTH, c.GUI_HEIGHT)
         self.minsize(c.GUI_WIDTH, c.GUI_HEIGHT)
-        self.get_screen_center()
 
-        self.font = ctk.CTkFont("Inter", 12, "bold")
+        self.font = ctk.CTkFont("Segoe UI", 12, 'bold')
         self.grid_rowconfigure(8, weight=1)
         self.grid_columnconfigure(0, weight=1)
         self.grid_columnconfigure(1, weight=1)
@@ -32,7 +31,7 @@ class App(ctk.CTk):
         self.ffmpeg_path_frame = ctk.CTkFrame(master=self, fg_color="transparent")
         self.ffmpeg_path_frame.grid(row=0, column=0, padx=10, pady=5, sticky='w')
         self.ffmpeg_path_entry = ctk.CTkEntry(master=self.ffmpeg_path_frame, placeholder_text="Path to ffmpeg.exe", corner_radius=c.CORNER_RADIUS, font=self.font, width=c.ENTRY_WIDTH)
-        self.ffmpeg_path_entry.insert(0, c.FFMPEG_PATH)
+        self.ffmpeg_path_entry.insert(0, find_ffmpeg())
         self.ffmpeg_path_entry.grid(row=0, column=0, padx=10, pady=5, sticky='nsew')
         self.ffmpeg_path_browse = ctk.CTkButton(master=self.ffmpeg_path_frame, text='Browse', command=self.ffmpeg_browse_callback, corner_radius=c.BTN_RADIUS, font=self.font)
         self.ffmpeg_path_browse.grid(row=0, column=1, padx=10, pady=5, sticky='nsew')
@@ -50,7 +49,7 @@ class App(ctk.CTk):
         self.fps_frame = ctk.CTkFrame(master=self.advanced_frame)
         self.fps_frame.grid(row=0, column=0, padx=5)
         self.fps_val = ctk.StringVar(value="60")
-        self.fps_opt = ctk.CTkOptionMenu(master=self.fps_frame, font=self.font, variable=self.fps_val, values=c.FPS_VALUES, width=70)
+        self.fps_opt = ctk.CTkOptionMenu(master=self.fps_frame, font=self.font, variable=self.fps_val, values=c.FPS_VALUES,  width=c.OPT_WIDTH-30)
         self.fps_opt.grid(row=0, column=0, padx=10, pady=5)
         self.fps_label = ctk.CTkLabel(master=self.fps_frame, text="Fps", font=self.font)
         self.fps_label.grid(row=0, column=1, padx=10, pady=5)
@@ -58,7 +57,7 @@ class App(ctk.CTk):
         self.codec_frame = ctk.CTkFrame(master=self.advanced_frame)
         self.codec_frame.grid(row=0, column=1, padx=5, sticky='nsew')
         self.codec_val = ctk.StringVar(value="libx264")
-        self.codec_opt = ctk.CTkOptionMenu(master=self.codec_frame, font=self.font, variable=self.codec_val, values=c.ENCODERS, width=100, command=self.codec_opt_callback)
+        self.codec_opt = ctk.CTkOptionMenu(master=self.codec_frame, font=self.font, variable=self.codec_val, values=c.ENCODERS, width=c.OPT_WIDTH, command=self.codec_opt_callback)
         self.codec_opt.grid(row=0, column=0, padx=10, pady=5)
         self.codec_label = ctk.CTkLabel(master=self.codec_frame, text='Codec', font=self.font)
         self.codec_label.grid(row=0, column=1, padx=10, pady=5)
@@ -66,7 +65,7 @@ class App(ctk.CTk):
         self.preset_frame = ctk.CTkFrame(master=self.advanced_frame)
         self.preset_frame.grid(row=0, column=2, padx=5, sticky='nsew')
         self.preset_val = ctk.StringVar(value="medium")
-        self.preset_opt = ctk.CTkOptionMenu(master=self.preset_frame, font=self.font, variable=self.preset_val, values=c.H264_PRESET_VALUES, width=100)
+        self.preset_opt = ctk.CTkOptionMenu(master=self.preset_frame, font=self.font, variable=self.preset_val, values=c.H264_PRESET_VALUES, width=c.OPT_WIDTH)
         self.preset_opt.grid(row=0, column=0, padx=10, pady=5)
         self.preset_label = ctk.CTkLabel(master=self.preset_frame, text="Preset ", font=self.font)
         self.preset_label.grid(row=0, column=1, padx=10, pady=5)
@@ -75,7 +74,7 @@ class App(ctk.CTk):
         self.crf_frame.grid(row=0, column=3, padx=5, sticky='nsew')
         self.crf_val = ctk.IntVar(value=c.CRF_INIT_VAL)
         self.crf_slider = ctk.CTkSlider(master=self.crf_frame, from_=c.CRF_MIN_VAL,
-                                        to=c.CRF_MAX_VAL, variable=self.crf_val, number_of_steps=c.CRF_STEPS, width=100)
+                                        to=c.CRF_MAX_VAL, variable=self.crf_val, number_of_steps=c.CRF_STEPS, width=c.SLIDER_WIDTH)
         self.crf_slider.grid(row=0, column=0, padx=10, pady=5)
         self.crf_label = ctk.CTkLabel(master=self.crf_frame, text="CRF", font=self.font)
         self.crf_label.grid(row=0, column=1, padx=10, pady=5)
@@ -106,7 +105,7 @@ class App(ctk.CTk):
         self.run_subframe1 = ctk.CTkFrame(master=self.run_frame)
         self.run_subframe1.grid(row=0, column=0, padx=5)
         self.containers_val = ctk.StringVar(value='mp4')
-        self.containers_opt = ctk.CTkOptionMenu(master=self.run_subframe1, values=c.LIBX264_CONTAINERS, variable=self.containers_val, width=100, font=self.font)
+        self.containers_opt = ctk.CTkOptionMenu(master=self.run_subframe1, values=c.LIBX264_CONTAINERS, variable=self.containers_val, width=c.OPT_WIDTH, font=self.font)
         self.containers_label = ctk.CTkLabel(master=self.run_subframe1, text='Container ', font=self.font)
         self.containers_opt.grid(row=0, column=0, padx=10, pady=5)
         self.containers_label.grid(row=0, column=1, padx=10, pady=5)
@@ -149,27 +148,35 @@ class App(ctk.CTk):
 
     def preview_callback(self):
         """Constructs a preview of command in log"""
-        command = self.construct_command()
+        outfile, command = self.construct_command()
         # self.log_textbox.delete("0.0", "end")
         self.log_textbox.insert("end", f"\nConstructed ffmpeg command: \n{command}\n")
+        if os.path.isfile(outfile):
+            os.remove(outfile)
 
     def run_callback(self):
         """Sends constructed command to ffmpeg."""
-        command = self.construct_command()
+        outfile, command = self.construct_command()
         self.log_textbox.delete("0.0", "end")
+        print(command)
         stdout, stderr = submit_ffmpeg(command)
         self.log_textbox.insert("end", f"FFmpeg output: {stderr}")
+        #Cleanup
+        if os.path.isfile(outfile):
+            os.remove(outfile)
 
     def construct_command(self):
         """Constructs a ffmpeg command from gui values entered by user."""
         output = self.out_path_entry.get()
-        output = "{}.{}".format(os.path.splitext(
-            output)[0], self.containers_val.get())
+        output = "{}.{}".format(os.path.splitext(output)[0], self.containers_val.get())
         sequence = sequence_collector(self.in_path_entry.get())
         split_path = os.path.split(self.in_path_entry.get())
         outfile = sequence_writer(split_path[0], sequence)
         step, missing = sequence_step_calc(sequence)
         actual_fps = (int(self.fps_val.get()) // step)
+        gamma = ""
+        if os.path.splitext(sequence[0])[-1] == '.exr':
+            gamma = "-gamma 2.2"
         self.log_textbox.delete("0.0", "end")
         self.log_textbox.insert("end", f"List of input frames written to: '{outfile}'.\n")
         self.log_textbox.insert("end", f"\nFrame step detected: {step}.\nEffective input fps adjusted to: {actual_fps}\n")
@@ -177,14 +184,5 @@ class App(ctk.CTk):
             self.log_textbox.insert("end", "\nDetected missing frames:\n")
             for file in missing:
                 self.log_textbox.insert("end", f"{file}\n")
-        self.command = f"""{c.FFMPEG_PATH} -y -r {actual_fps} -f concat -safe 0 -i {outfile} -framerate {self.fps_val.get()} -c:v {self.codec_opt.get()} -crf {self.crf_val.get()} -preset {self.preset_opt.get()} -pix_fmt yuv420p {output}"""
-
-        return self.command
-
-    def get_screen_center(self):
-        """Should position a new window to the screen center but doesn't."""
-        screen_width = self.winfo_screenwidth()
-        screen_height = self.winfo_screenheight()
-        x = (screen_width - self.winfo_rootx() - self.winfo_width()) // 2
-        y = (screen_height - self.winfo_rooty() - self.winfo_height()) // 2
-        self.geometry("+{}+{}".format(x, y))
+        self.command = f"{c.FFMPEG_PATH} -y {gamma} -r {actual_fps} -f concat -safe 0 -i {outfile} -framerate {self.fps_val.get()} -c:v {self.codec_opt.get()} -crf {self.crf_val.get()} -preset {self.preset_opt.get()} -pix_fmt yuv420p \"{output}\""
+        return outfile, self.command
