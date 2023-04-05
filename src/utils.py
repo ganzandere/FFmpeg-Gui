@@ -38,7 +38,9 @@ def detect_missing_frames(sequence_list, step):
     padding_num = len(re.findall(c.FRAME_PATTERN, sequence_list[0])[-1].replace(".", ""))
     first_frame = int(re.findall(c.FRAME_PATTERN, sequence_list[0])[-1].replace(".", ""))
     last_frame = int(re.findall(c.FRAME_PATTERN, sequence_list[-1])[-1].replace(".", ""))
+
     missing = []
+
     for i in range(first_frame, last_frame, step):
         padding = f"{i}".zfill(padding_num)
         search_pattern = re.sub(c.FRAME_PATTERN, f".{padding}", sequence_list[0])
@@ -61,8 +63,12 @@ def sequence_formatter(sequence_list):
     return formatted_sequence
 
 
-def sequence_writer(directory, sequence_list):
+def sequence_writer(directory, sequence_list, missing):
     """Write file sequence to txt.file"""
+    merged_list = []
+    merged_list = sequence_list + missing
+    merged_list.sort()
+
     with open(f"{directory}/ffmpeg_input.txt", "wb") as outfile:
         for filename in sequence_list:
             outfile.write(f"file '{os.path.normpath(filename)}'\n".encode())
@@ -81,6 +87,7 @@ def find_ffmpeg():
         ffmpeg_path = c.FFMPEG_LOCAL_PATH
     return ffmpeg_path
 
+
 def submit_ffmpeg(ffmpeg_command):
     """Submits a command constructed in gui module to ffmpeg."""
 
@@ -88,4 +95,3 @@ def submit_ffmpeg(ffmpeg_command):
         ffmpeg_command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     stdout, stderr = p.communicate()
     return stdout.decode(), stderr.decode()
-    
