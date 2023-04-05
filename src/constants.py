@@ -26,4 +26,6 @@ ENCODERS = ['libx264', 'libx265']
 LIBX264_CONTAINERS = ['mp4', 'mov', 'mkv']
 LIBX265_CONTAINERS = ['hevc', 'mp4', 'mov', 'mkv']
 
+FILL_METHODS = ['Repeat', 'Color', 'Black', 'None']
+
 FRAME_PATTERN = r"\.\d{1,10}"
