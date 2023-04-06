@@ -19,8 +19,10 @@ class App(ctk.CTk):
         ctk.set_appearance_mode("dark")
         ctk.set_default_color_theme("blue")
 
+        self.missing_image = os.path.normpath(f"{os.path.dirname(__file__)}/../icons/missing_screen.png")
         icon_path = os.path.normpath(f"{os.path.dirname(__file__)}/../icons/ffmpeg.ico")
         self.iconbitmap(icon_path)
+
         self.title("DK FFmpeg GUI")
         self.geometry(f"{c.GUI_WIDTH}x{c.GUI_HEIGHT}")
         self.maxsize(c.GUI_WIDTH, c.GUI_HEIGHT)
@@ -99,6 +101,7 @@ class App(ctk.CTk):
         self.log_label.grid(row=0, column=0, padx=5, pady=5, sticky="w")
         self.log_textbox = ctk.CTkTextbox(master=self.log_frame, font=self.font, width=c.TEXTBOX_WIDTH, height=c.TEXTBOX_HEIGHT, wrap="none")
         self.log_textbox.grid(row=1, column=0, padx=0, pady=0)
+        self.log_textbox.configure(state='disabled')
         # Run
         self.run_frame = ctk.CTkFrame(master=self, fg_color="transparent")
         self.run_frame.grid(row=7, column=0, padx=10, pady=5, sticky='w')
@@ -115,7 +118,7 @@ class App(ctk.CTk):
         # Fill Method
         self.fill_frame = ctk.CTkFrame(master=self.run_frame)
         self.fill_frame.grid(row=0, column=1, padx=5)
-        self.fill_method_val = ctk.StringVar(value='Color')
+        self.fill_method_val = ctk.StringVar(value='Image')
         self.fill_methods = ctk.CTkOptionMenu(master=self.fill_frame, values=c.FILL_METHODS, variable=self.fill_method_val, width=c.OPT_WIDTH, font=self.font)
         self.fill_methods.grid(row=0, column=0, padx=5, pady=5)
         self.fill_label = ctk.CTkLabel(master=self.fill_frame, text='Fill Method', font=self.font)
@@ -125,7 +128,7 @@ class App(ctk.CTk):
         self.run_subframe2.grid(row=0, column=2, padx=5)
         self.preview_button = ctk.CTkButton(master=self.run_subframe2, text='Preview', font=self.font, command=self.preview_callback)
         self.preview_button.grid(row=0, column=0, padx=10, pady=5)
-        self.run_button = ctk.CTkButton(master=self.run_subframe2, text='Run', font=self.font, command=self.run_callback)
+        self.run_button = ctk.CTkButton(master=self.run_subframe2, text='Run', font=self.font, command=self.run_callback, fg_color="#45bf55")
         self.run_button.grid(row=0, column=1, padx=10, pady=5)
 
     def ffmpeg_browse_callback(self):
@@ -160,27 +163,44 @@ class App(ctk.CTk):
     def preview_callback(self):
         """Constructs a preview of command in Log"""
         with tempfile.TemporaryDirectory() as temp_dir:
+            self.log_textbox.configure(state='normal')
             command = self.construct_command(temp_dir)
             #Log output
-            self.log_textbox.delete("0.0", "end")
-            self.log_textbox.insert("0.0", f"\nConstructed ffmpeg command: \n{command}\n")
-        
+            self.log_textbox.insert("0.0", f"Constructed ffmpeg command: \n{command}\n")
+            self.log_textbox.configure(state='disabled')
+
     def run_callback(self):
         """Sends constructed command to ffmpeg."""
+        self.log_textbox.configure(state='normal')
+        if not os.path.isfile(self.ffmpeg_path_entry.get()):
+            self.log_textbox.delete("0.0", "end")
+            self.log_textbox.insert("0.0", f"FFmpeg.exe not found at: '{self.ffmpeg_path_entry.get()}'")
+            self.log_textbox.configure(state='disabled')
+            return
+        
+        if not self.output_entry.get():
+            self.log_textbox.delete("0.0", "end")
+            self.log_textbox.insert("0.0", "Please choose an output filepath.")
+            self.log_textbox.configure(state='disabled')
+            return
+        
         with tempfile.TemporaryDirectory() as temp_dir:
             command = self.construct_command(temp_dir)
             #Log output
             self.log_textbox.delete("0.0", "end")
-            self.log_textbox.insert("0.0", f"\nConstructed ffmpeg command: \n{command}\n\n")
+            self.log_textbox.insert("0.0", f"Constructed ffmpeg command: \n{command}\n\n")
             stdout, stderr = submit_ffmpeg(command)
             self.log_textbox.insert("end", f"FFmpeg output: {stderr}")
+            self.log_textbox.configure(state='disabled')
 
     def construct_command(self, directory):
         """Constructs a ffmpeg command from gui values entered by user."""
+        #Checks ffmpeg.exe.     
         ffmpeg_path = os.path.normpath(self.ffmpeg_path_entry.get())
         input_entry = self.input_entry.get()
         output_stem = os.path.splitext(self.output_entry.get())[0]
-
+        
+        #Gets gui vars for ffmpeg
         fps = int(self.fps_val.get())
         method = self.fill_method_val.get()
         container = self.containers_val.get()
@@ -189,13 +209,14 @@ class App(ctk.CTk):
         sequence = sequence_collector(input_entry)
         step, missing = sequence_step_calc(sequence)
 
+        img = ""
         if missing:
-            if method == 'None':
+            if method == 'Off':
                 missing = []
-            else:
-                missing = fill(method, directory)
+            elif method == 'Image':
+                img = self.missing_image
 
-        outfile = sequence_writer(directory, sequence, missing)
+        outfile = sequence_writer(directory, sequence, missing, img)
 
         actual_fps = (fps // step)
         # Checks the extension for .exr and sets gamma to 2.2 if True.
