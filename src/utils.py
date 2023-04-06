@@ -12,7 +12,7 @@ def sequence_collector(file_path):
     prefix, extension = os.path.splitext(filename)
     prefix = re.sub(r'\.\d{1,10}$', lambda x: c.FRAME_PATTERN, prefix)
     pattern = f"^{prefix}{extension}$"
-    files = [os.path.join(directory, f) for f in os.listdir(directory) if re.match(pattern, f)]
+    files = [os.path.normpath(os.path.join(directory, f)) for f in os.listdir(directory) if re.match(pattern, f)]
     return files
 
 
@@ -63,17 +63,37 @@ def sequence_formatter(sequence_list):
     return formatted_sequence
 
 
-def sequence_writer(directory, sequence_list, missing):
+def sequence_writer(directory, sequence_list, missing, placeholder_img):
     """Write file sequence to txt.file"""
     merged_list = []
+    final_list = []
     merged_list = sequence_list + missing
     merged_list.sort()
+    
+    for idx, image in enumerate(merged_list):
+        if image in missing:
+            if placeholder_img:
+                final_list.append(placeholder_img)
+            else:
+                result = (find_nearest(merged_list, idx))
+                if result:
+                    final_list.append(result)
+        else:
+            final_list.append(image)
 
     with open(f"{directory}/ffmpeg_input.txt", "wb") as outfile:
-        for filename in sequence_list:
+        for filename in final_list:
             outfile.write(f"file '{os.path.normpath(filename)}'\n".encode())
     return os.path.normpath(os.path.join(directory, "ffmpeg_input.txt"))
 
+def find_nearest(sequence, idx):
+
+    for i in range(idx, 0, -1):
+        if os.path.isfile(sequence[i]):
+            return sequence[i]
+    for i in range(idx + 1, len(sequence)-1):
+        if os.path.isfile(sequence[i]):
+            return sequence[i]
 
 def find_ffmpeg():
     """Returns ffmpeg.exe path found on system"""
