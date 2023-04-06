@@ -3,6 +3,8 @@ import os
 import re
 import subprocess
 
+import imageio.v3 as iio
+
 import constants as c
 
 
@@ -69,7 +71,7 @@ def sequence_writer(directory, sequence_list, missing, placeholder_img):
     final_list = []
     merged_list = sequence_list + missing
     merged_list.sort()
-    
+
     for idx, image in enumerate(merged_list):
         if image in missing:
             if placeholder_img:
@@ -94,6 +96,17 @@ def find_nearest(sequence, idx):
     for i in range(idx + 1, len(sequence)-1):
         if os.path.isfile(sequence[i]):
             return sequence[i]
+
+def dummy_convert(dummy, format, directory):
+    """Converts a dummy placeholder image to format matching the sequence thats encoded."""
+    if format == ".exr":
+        exr_dummy = f"{os.path.splitext(dummy)[0]}{format}"
+        return exr_dummy
+
+    im = iio.imread(dummy)
+    new_dummy = os.path.join(directory, f"dummy_img{format}")
+    diskimage = iio.imwrite(new_dummy, im)
+    return(new_dummy)
 
 def find_ffmpeg():
     """Returns ffmpeg.exe path found on system"""

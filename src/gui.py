@@ -1,13 +1,15 @@
 """Module defining GUI"""
 import os
+import sys
 import tempfile
 from tkinter import filedialog as fd
 
 import customtkinter as ctk
 
+sys.path.append('os.path.dirname(__file__)')
+
 import constants as c
-from utils import (find_ffmpeg, sequence_collector, sequence_step_calc,
-                   sequence_writer, submit_ffmpeg)
+from utils import *
 
 
 class App(ctk.CTk):
@@ -15,11 +17,10 @@ class App(ctk.CTk):
 
     def __init__(self):
         super().__init__()
-
         ctk.set_appearance_mode("dark")
         ctk.set_default_color_theme("blue")
 
-        self.missing_image = os.path.normpath(f"{os.path.dirname(__file__)}/../icons/missing_screen.png")
+        self.dummy_img = os.path.normpath(f"{os.path.dirname(__file__)}/../icons/dummy_img.png")
         icon_path = os.path.normpath(f"{os.path.dirname(__file__)}/../icons/ffmpeg.ico")
         self.iconbitmap(icon_path)
 
@@ -164,7 +165,7 @@ class App(ctk.CTk):
         """Constructs a preview of command in Log"""
         with tempfile.TemporaryDirectory() as temp_dir:
             self.log_textbox.configure(state='normal')
-            command = self.construct_command(temp_dir)
+            command = self.construct_command(temp_dir)[0]
             #Log output
             self.log_textbox.insert("0.0", f"Constructed ffmpeg command: \n{command}\n")
             self.log_textbox.configure(state='disabled')
@@ -177,29 +178,32 @@ class App(ctk.CTk):
             self.log_textbox.insert("0.0", f"FFmpeg.exe not found at: '{self.ffmpeg_path_entry.get()}'")
             self.log_textbox.configure(state='disabled')
             return
-        
+
         if not self.output_entry.get():
             self.log_textbox.delete("0.0", "end")
             self.log_textbox.insert("0.0", "Please choose an output filepath.")
             self.log_textbox.configure(state='disabled')
             return
-        
+
         with tempfile.TemporaryDirectory() as temp_dir:
-            command = self.construct_command(temp_dir)
+            command, output = self.construct_command(temp_dir)
             #Log output
             self.log_textbox.delete("0.0", "end")
             self.log_textbox.insert("0.0", f"Constructed ffmpeg command: \n{command}\n\n")
             stdout, stderr = submit_ffmpeg(command)
-            self.log_textbox.insert("end", f"FFmpeg output: {stderr}")
+            self.log_textbox.insert("end", f"FFmpeg output: {stderr}\n")
+            if os.path.isfile(output):
+                self.log_textbox.insert("end", f"Succesfully created at: {output}\n")
+                os.startfile(output)
             self.log_textbox.configure(state='disabled')
 
     def construct_command(self, directory):
         """Constructs a ffmpeg command from gui values entered by user."""
-        #Checks ffmpeg.exe.     
+        #Checks ffmpeg.exe.
         ffmpeg_path = os.path.normpath(self.ffmpeg_path_entry.get())
         input_entry = self.input_entry.get()
         output_stem = os.path.splitext(self.output_entry.get())[0]
-        
+
         #Gets gui vars for ffmpeg
         fps = int(self.fps_val.get())
         method = self.fill_method_val.get()
@@ -214,7 +218,9 @@ class App(ctk.CTk):
             if method == 'Off':
                 missing = []
             elif method == 'Image':
-                img = self.missing_image
+                sequence_ext = os.path.splitext(sequence[0])[-1]
+                img = dummy_convert(self.dummy_img, sequence_ext, directory)
+                print(img)
 
         outfile = sequence_writer(directory, sequence, missing, img)
 
@@ -235,4 +241,4 @@ class App(ctk.CTk):
                     self.log_textbox.insert("end", f"{file}\n")
         # Sends command to ffmpeg.
         command = f"{ffmpeg_path} -y {gamma} -r {actual_fps} -f concat -safe 0 -i {outfile} -framerate {self.fps_val.get()} -c:v {self.codec_opt.get()} -crf {self.crf_val.get()} -preset {self.preset_opt.get()} -pix_fmt yuv420p \"{output}\""
-        return command
+        return command, output
