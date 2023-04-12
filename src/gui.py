@@ -129,7 +129,7 @@ class App(ctk.CTk):
         self.run_subframe2.grid(row=0, column=2, padx=5)
         self.preview_button = ctk.CTkButton(master=self.run_subframe2, text='Preview', font=self.font, command=self.preview_callback)
         self.preview_button.grid(row=0, column=0, padx=10, pady=5)
-        self.run_button = ctk.CTkButton(master=self.run_subframe2, text='Run', font=self.font, command=self.run_callback, fg_color="#45bf55")
+        self.run_button = ctk.CTkButton(master=self.run_subframe2, text='Run', font=self.font, command=self.run_callback, fg_color="#27ae60")
         self.run_button.grid(row=0, column=1, padx=10, pady=5)
 
     def ffmpeg_browse_callback(self):
