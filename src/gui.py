@@ -6,22 +6,25 @@ from tkinter import filedialog as fd
 
 import customtkinter as ctk
 
-sys.path.append('os.path.dirname(__file__)')
-
 import constants as c
 from utils import *
 
 
 class App(ctk.CTk):
     """Defines a GUI class."""
-
     def __init__(self):
         super().__init__()
         ctk.set_appearance_mode("dark")
         ctk.set_default_color_theme("blue")
 
-        self.dummy_img = os.path.normpath(f"{os.path.dirname(__file__)}/../icons/dummy_img.png")
-        icon_path = os.path.normpath(f"{os.path.dirname(__file__)}/../icons/ffmpeg.ico")
+        #Ensures correct relative path to images if pyinstaller module is used to package the project
+        if getattr(sys, "frozen", False):
+            self.dummy_img = os.path.normpath(f"{os.path.dirname(__file__)}/icons/dummy_img.png")
+            icon_path = os.path.normpath(f"{os.path.dirname(__file__)}/icons/ffmpeg.ico")
+        else:
+            self.dummy_img = os.path.normpath(f"{os.path.dirname(__file__)}/../icons/dummy_img.png")
+            icon_path = os.path.normpath(f"{os.path.dirname(__file__)}/../icons/ffmpeg.ico")
+
         self.iconbitmap(icon_path)
 
         self.title("DK FFmpeg GUI")
